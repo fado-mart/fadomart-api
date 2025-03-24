@@ -11,6 +11,7 @@ export const permissions = [
         role: 'admin',
         actions: [
             'get_profile',
+            'get_profiles',
             'update_profile',
             'add_product',
             'update_product',
@@ -22,6 +23,7 @@ export const permissions = [
         role: 'superadmin',
         actions: [
             'get_profile',
+            'get_profiles',
             'update_profile',
             'delete_profile',
             'add_product',

@@ -1,8 +1,9 @@
+import { createTransport } from "nodemailer";
 
 export const mailTransporter = createTransport({
     host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.MAIL_ADDRESS,
         pass: process.env.MAIL_PASS_KEY

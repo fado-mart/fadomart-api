@@ -16,6 +16,27 @@ const userSchema = new Schema({
     timestamps: true
 });
 
+const blacklistSchema = new Schema({
+    token: {
+        type: String,
+        required: true
+    },
+
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+
+    expiresAt: {
+        type: Date,
+        required: true
+    }
+});
+blacklistSchema.index({createdAt: 1}, {expireAfterSeconds: 300});
+
+
 userSchema.plugin(toJSON);
 
 export const UserModel = model('User', userSchema);
+
+export const BlacklistModel = model("Blacklist", blacklistSchema);
