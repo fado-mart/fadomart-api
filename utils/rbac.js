@@ -16,7 +16,10 @@ export const permissions = [
             'add_product',
             'update_product',
             'get_product',
-            'delete_product'
+            'delete_product',
+            'add_category',
+            'update_category',
+            'delete_category'
         ]
     },
     {
@@ -29,7 +32,10 @@ export const permissions = [
             'add_product',
             'update_product',
             'get_product',
-            'delete_product'
+            'delete_product',
+            'add_category',
+            'update_category',
+            'delete_category'
         ]
     }
 ]

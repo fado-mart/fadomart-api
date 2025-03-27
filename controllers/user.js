@@ -9,7 +9,7 @@ import { generateEmailTemplate } from "../utils/template.js";
 export const registerUser = async (req, res, next) => {
     try {
         // validate user input
-        const { error, value } = registerUserValidator.validate(req.body);
+        const { error, value } = registerUserValidator.validate(req.body, { avatar: req.file?.filename});
         if (error) {
             return res.status(422).json(error);
         }
