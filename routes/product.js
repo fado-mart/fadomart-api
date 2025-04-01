@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { hasPermission, isAuthenticated } from "../middlewares/auth.js";
 import { productsUpload } from "../middlewares/upload.js";
-import { addProduct, countProducts, deleteProducts, getProduct, getProducts, updateProduct, testDropboxConnection } from "../controllers/products.js";
-import upload from "../middlewares/multer.js";
+import { addProduct, countProducts, deleteProducts, getProduct, getProducts, updateProduct, testDropboxConnection, syncProductInventory } from "../controllers/products.js";
+import  upload  from "../middlewares/multer.js";
 
 const productRouter = Router()
 
@@ -20,5 +20,7 @@ productRouter.patch('/products/:id', isAuthenticated, hasPermission('update_prod
 productRouter.delete('/products/:id', isAuthenticated, hasPermission('delete_product'), deleteProducts);
 
 productRouter.get('/products/count', countProducts);
+
+productRouter.put('/:productId/sync-inventory', isAuthenticated, syncProductInventory);
 
 export default productRouter;

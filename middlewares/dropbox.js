@@ -31,6 +31,13 @@ let currentAccessToken = process.env.DB_TOKEN;
 // Function to refresh the access token
 const refreshAccessToken = async () => {
     try {
+        console.log('Attempting to refresh Dropbox token...');
+        
+        // Validate required credentials
+        if (!DROPBOX_CONFIG.oauth.clientId || !DROPBOX_CONFIG.oauth.clientSecret || !DROPBOX_CONFIG.oauth.refreshToken) {
+            throw new Error('Missing required Dropbox OAuth credentials');
+        }
+
         const response = await axios.post(DROPBOX_CONFIG.oauth.tokenEndpoint, 
             new URLSearchParams({
                 grant_type: 'refresh_token',
@@ -50,15 +57,23 @@ const refreshAccessToken = async () => {
             lastTokenCheck = Date.now();
             console.log('Dropbox access token refreshed successfully');
             return true;
+        } else {
+            console.error('No access token in refresh response:', response.data);
+            return false;
         }
     } catch (error) {
         console.error('Failed to refresh Dropbox token:', {
             error: error.message,
             status: error.response?.status,
-            data: error.response?.data
+            data: error.response?.data,
+            config: {
+                clientId: DROPBOX_CONFIG.oauth.clientId ? 'present' : 'missing',
+                clientSecret: DROPBOX_CONFIG.oauth.clientSecret ? 'present' : 'missing',
+                refreshToken: DROPBOX_CONFIG.oauth.refreshToken ? 'present' : 'missing'
+            }
         });
+        return false;
     }
-    return false;
 };
 
 // Function to check and refresh token if needed
@@ -94,6 +109,7 @@ const initializeDropboxClient = () => {
         }
         dbx = new Dropbox({ accessToken: currentAccessToken });
         lastTokenCheck = Date.now();
+        console.log('Dropbox client initialized successfully');
     } catch (error) {
         console.error('Failed to initialize Dropbox client:', error);
         throw new Error('Dropbox service initialization failed');

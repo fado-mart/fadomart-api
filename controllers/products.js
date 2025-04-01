@@ -3,6 +3,7 @@ import { productModel } from "../models/products.js";
 import { addProductValidator, updateProductValidator } from "../validators/products.js";
 import fs from 'fs';
 import path from 'path';
+import { inventoryModel } from "../models/inventory.js";
 
 // Helper function to clean up local files
 const cleanupLocalFile = (filePath) => {
@@ -221,3 +222,106 @@ export const countProducts = async (req, res, next) => {
         next(error);
     }
 }
+
+// Update product quantity
+export const updateProductQuantity = async (req, res, next) => {
+    try {
+        const { product, quantity } = req.body;
+
+        console.log('Received request:', { product, quantity });
+
+        // Validate input
+        if (!product || !quantity) {
+            return res.status(400).json({
+                message: "Product ID and quantity are required",
+                received: { product, quantity }
+            });
+        }
+
+        // Validate quantity is a positive number
+        if (quantity < 0) {
+            return res.status(400).json({
+                message: "Quantity must be a positive number",
+                received: { product, quantity }
+            });
+        }
+
+        // First check if product exists
+        const existingProduct = await productModel.findById(product);
+        console.log('Existing product:', existingProduct);
+
+        if (!existingProduct) {
+            return res.status(404).json({ 
+                message: "Product not found",
+                productId: product,
+                details: "The product ID provided does not exist in the database"
+            });
+        }
+
+        // Check if there's enough quantity available
+        if (quantity > existingProduct.quantity) {
+            return res.status(400).json({
+                message: "Insufficient product quantity",
+                available: existingProduct.quantity,
+                requested: quantity
+            });
+        }
+
+        // Find and update product
+        const updatedProduct = await productModel.findByIdAndUpdate(
+            product,
+            { $set: { quantity } },
+            { new: true, runValidators: true }
+        );
+
+        console.log('Updated product:', updatedProduct);
+
+        res.status(200).json({
+            message: `Product quantity updated successfully`,
+            product: updatedProduct,
+            previousQuantity: existingProduct.quantity,
+            newQuantity: quantity
+        });
+    } catch (error) {
+        console.error('Error updating product quantity:', error);
+        next(error);
+    }
+};
+
+export const syncProductInventory = async (req, res, next) => {
+    try {
+        const { productId } = req.params;
+        const { quantity } = req.body;
+
+        // Update product inventory
+        const inventory = await inventoryModel.findOne({ product: productId });
+        if (!inventory) {
+            return res.status(404).json({ message: 'Inventory record not found' });
+        }
+
+        // Update both product and inventory quantities
+        const product = await productModel.findById(productId);
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        product.quantity = quantity;
+        inventory.quantity = quantity;
+
+        // Update stock status based on quantity
+        product.stockStatus = quantity > 0 ? 'In Stock' : 'Out of Stock';
+
+        await Promise.all([
+            product.save(),
+            inventory.save()
+        ]);
+
+        res.json({
+            message: 'Product and inventory synchronized successfully',
+            product,
+            inventory
+        });
+    } catch (error) {
+        next(error);
+    }
+};

@@ -19,7 +19,9 @@ export const permissions = [
             'delete_product',
             'add_category',
             'update_category',
-            'delete_category'
+            'delete_category',
+            'get_userOders',
+            'update_orderStatus'
         ]
     },
     {
@@ -35,7 +37,9 @@ export const permissions = [
             'delete_product',
             'add_category',
             'update_category',
-            'delete_category'
+            'delete_category',
+            'get_userOders',
+            'update_orderStatus'
         ]
     }
 ]

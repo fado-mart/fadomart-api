@@ -4,32 +4,32 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { mailTransporter } from "../utils/mail.js";
 import { generateEmailTemplate } from "../utils/template.js";
+import { sendPasswordResetEmail, sendPasswordResetConfirmation } from "../utils/emailService.js";
 
 // Register user
 export const registerUser = async (req, res, next) => {
     try {
-        // validate user input
-        const { error, value } = registerUserValidator.validate(req.body, { avatar: req.file?.filename});
+        const { error, value } = registerUserValidator.validate(req.body, { avatar: req.file?.filename });
         if (error) {
             return res.status(422).json(error);
         }
 
-        // check if user already exists
+        // Check if user already exists
         const user = await UserModel.findOne({ email: value.email });
         if (user) {
-            return res.status(409).json('User already exist!');
+            return res.status(409).json('User already exists!');
         }
 
-        // hash user password
-        const hashPassword = bcryptjs.hashSync(value.password, 10);
+        // Hash password
+        const hashPassword = bcrypt.hashSync(value.password, 10);
 
-        // save user into database
+        // Create new user
         await UserModel.create({
             ...value,
             password: hashPassword
         });
 
-        // send email
+        // Send welcome email
         const emailContent = `
         <p> Dear ${value.userName}, </p>
         <h4>You have been registered successfully!</h4>
@@ -37,18 +37,69 @@ export const registerUser = async (req, res, next) => {
         `;
 
         await mailTransporter.sendMail({
-            from: `FADOMART MALL <process.env.MAIL_ADDRESS>`,
+            from: `FADOMART MALL <${process.env.MAIL_ADDRESS}>`,
             to: value.email,
             subject: "User Account Registration",
             html: generateEmailTemplate(emailContent)
         });
 
-        // respond to request
-        res.json('User Registeration Successful')
+        res.status(201).json({ message: 'Registration successful' });
     } catch (error) {
         next(error);
     }
-}
+};
+
+// Request password reset
+export const requestPasswordReset = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        const user = await UserModel.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const resetToken = user.generatePasswordResetToken();
+        await user.save();
+
+        await sendPasswordResetEmail(user.userName, user.email, resetToken);
+
+        res.json({ message: 'Password reset email sent successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Reset password
+export const resetPassword = async (req, res, next) => {
+    try {
+        const { token, password } = req.body;
+
+        const user = await UserModel.findOne({
+            passwordResetToken: token,
+            passwordResetExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired reset token' });
+        }
+
+        // Hash new password
+        const hashPassword = bcrypt.hashSync(password, 10);
+        // console.log('Reset Password - New Hash:', hashPassword);
+        
+        user.password = hashPassword;
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+        await user.save();
+
+        await sendPasswordResetConfirmation(user.userName, user.email);
+
+        res.json({ message: 'Password reset successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
 
 // Login users
 export const userLogin = async (req, res, next) => {
@@ -65,7 +116,12 @@ export const userLogin = async (req, res, next) => {
             return res.status(404).json('User does not exist')
         }
 
+        // console.log('Login - Stored Hash:', user.password);
+        // console.log('Login - Attempting with password:', value.password);
+        
         const correctPassword = bcrypt.compareSync(value.password, user.password);
+        // console.log('Login - Password match:', correctPassword);
+
         if (!correctPassword) {
             return res.status(401).json('Invalid credentials!');
         }
