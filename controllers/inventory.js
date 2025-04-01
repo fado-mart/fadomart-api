@@ -15,10 +15,10 @@ export const updateStock = async (req, res, next) => {
     // Find or create inventory
     let inventory = await inventoryModel.findOne({ product: productId });
     if (!inventory) {
-      // Create new inventory record if it doesn't exist
+      // Create new inventory with same quantity as product
       inventory = await inventoryModel.create({
         product: productId,
-        quantity: 0,
+        quantity: product.quantity, // Sync with product quantity
         lowStockThreshold: 10,
         location: 'Main-Shop'
       });
@@ -44,12 +44,11 @@ export const updateStock = async (req, res, next) => {
         return res.status(400).json({ message: 'Invalid operation type' });
     }
 
-    // Update both inventory and product quantity
+    // Update both inventory and product
     inventory.quantity = newQuantity;
     inventory.lastUpdated = Date.now();
-    product.quantity = newQuantity; // Sync product quantity
+    product.quantity = newQuantity; // Keep product quantity in sync
 
-    // Save both updates
     await Promise.all([
       inventory.save(),
       product.save()
@@ -73,16 +72,12 @@ export const updateStock = async (req, res, next) => {
     // }
 
     res.json({
-      message: 'Inventory and product updated successfully',
-      currentStock: newQuantity,
+      message: 'Stock updated successfully',
+      inventory,
       product: {
         id: product._id,
         name: product.name,
         quantity: product.quantity
-      },
-      inventory: {
-        quantity: inventory.quantity,
-        lastUpdated: inventory.lastUpdated
       }
     });
   } catch (error) {
@@ -115,4 +110,48 @@ export const getInventoryHistory = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+// Add a new function to sync quantities
+export const syncInventory = async (req, res, next) => {
+  try {
+    const { productId } = req.params;
+    
+    const product = await productModel.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const inventory = await inventoryModel.findOne({ product: productId });
+    if (!inventory) {
+      return res.status(404).json({ message: 'Inventory not found' });
+    }
+
+    // Use product quantity as source of truth
+    inventory.quantity = product.quantity;
+    inventory.lastUpdated = Date.now();
+    await inventory.save();
+
+    res.json({
+      message: 'Inventory synchronized with product',
+      inventory,
+      product: {
+        id: product._id,
+        name: product.name,
+        quantity: product.quantity
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const syncProductWithInventory = async (productId) => {
+    const product = await productModel.findById(productId);
+    const inventory = await inventoryModel.findOne({ product: productId });
+
+    if (product && inventory) {
+        product.quantity = inventory.quantity; // Sync product quantity with inventory
+        await product.save();
+    }
 }; 
