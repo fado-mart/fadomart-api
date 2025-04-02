@@ -1,56 +1,12 @@
-import { uploadFileToDropbox } from "../middlewares/dropbox.js";
 import { productModel } from "../models/products.js";
 import { addProductValidator, updateProductValidator } from "../validators/products.js";
-import fs from 'fs';
-import path from 'path';
 import { inventoryModel } from "../models/inventory.js";
 
-// Helper function to clean up local files
-const cleanupLocalFile = (filePath) => {
-    try {
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
-    } catch (error) {
-        console.error('Failed to clean up local file:', error);
-    }
-};
-
-// Test Dropbox connection
-export const testDropboxConnection = async (req, res, next) => {
-    try {
-        // Try to upload a small test file
-        const testFilePath = path.join(process.cwd(), 'uploads', 'test.txt');
-        
-        // Create a test file
-        fs.writeFileSync(testFilePath, 'Test file for Dropbox connection');
-        
-        try {
-            const result = await uploadFileToDropbox(testFilePath);
-            res.json({
-                message: 'Dropbox connection successful',
-                details: {
-                    path: result.path_display,
-                    size: result.size,
-                    name: result.name
-                }
-            });
-        } finally {
-            // Clean up the test file
-            cleanupLocalFile(testFilePath);
-        }
-    } catch (error) {
-        res.status(500).json({
-            message: 'Dropbox connection test failed',
-            error: error.message
-        });
-    }
-};
 
 export const addProduct = async (req, res, next) => {
-    let uploadedFilePath = null;
     try {
         // Validate request body
+        const image = req.file?.path; //Get uploaded image URL from Cloudinary
         const { error, value } = addProductValidator.validate({
             ...req.body,
         });
@@ -62,44 +18,27 @@ export const addProduct = async (req, res, next) => {
         }
 
         // Validate file upload
-        if (!req.file) {
-            return res.status(400).json({ 
+        if (!image) {
+            return res.status(400).json({
                 message: "Product image is required",
                 field: "image"
             });
         }
 
-        uploadedFilePath = req.file.path;
-        let uploadResult;
-        
-        try {
-            uploadResult = await uploadFileToDropbox(uploadedFilePath);
-        } catch (uploadError) {
-            return res.status(500).json({ 
-                message: "Failed to upload product image",
-                error: uploadError.message,
-                field: "image"
-            });
-        }
 
         // Create product with uploaded image
         const product = await productModel.create({
             ...value,
-            image: uploadResult.path_display,
+            image,
             user: req.auth.id
         });
 
-        res.status(201).json({ 
+        res.status(201).json({
             message: `Product: ${product.productName}, added successfully`,
             product
         });
     } catch (error) {
         next(error);
-    } finally {
-        // Clean up local file if it exists
-        if (uploadedFilePath) {
-            cleanupLocalFile(uploadedFilePath);
-        }
     }
 }
 
@@ -139,15 +78,19 @@ export const getProduct = async (req, res, next) => {
 export const updateProduct = async (req, res, next) => {
     let uploadedFilePath = null;
     try {
+        const image = req.file?.path;
         // Validate request body
         const { error, value } = updateProductValidator.validate({
             ...req.body,
         });
         if (error) {
-            return res.status(422).json({ 
+            return res.status(422).json({
                 message: "Validation failed",
                 errors: error.details.map(detail => detail.message)
             });
+        }
+        if (!image) {
+            return res.status(400).json({message: "Product Image is Required!"});
         }
 
         // Check if product exists
@@ -160,12 +103,13 @@ export const updateProduct = async (req, res, next) => {
 
         // Handle new image upload if provided
         if (req.file) {
-            uploadedFilePath = req.file.path;
             try {
-                const uploadResult = await uploadFileToDropbox(uploadedFilePath);
-                updatedImages = uploadResult.path_display;
+                const uploadedImageUrl = req.file.path; // Cloudinary automatically provides a URL
+        
+                // Store the Cloudinary URL in the updatedImages variable
+                updatedImages = uploadedImageUrl;
             } catch (uploadError) {
-                return res.status(500).json({ 
+                return res.status(500).json({
                     message: "Failed to upload new product image",
                     error: uploadError.message,
                     field: "image"
@@ -180,7 +124,7 @@ export const updateProduct = async (req, res, next) => {
             { new: true, runValidators: true }
         );
 
-        res.status(200).json({ 
+        res.status(200).json({
             message: `${updatedProduct.productName} modified successfully`,
             product: updatedProduct
         });
@@ -196,13 +140,13 @@ export const updateProduct = async (req, res, next) => {
 
 export const deleteProducts = async (req, res, next) => {
     try {
-        const product = await productModel.findOneAndDelete({_id: req.params.id});
+        const product = await productModel.findOneAndDelete({ _id: req.params.id });
 
         if (!product) {
             return res.status(404).json({ message: "Product not found" });
         }
 
-        res.status(200).json({ 
+        res.status(200).json({
             message: `${product.productName} has been deleted successfully.`,
             product
         });
@@ -251,7 +195,7 @@ export const updateProductQuantity = async (req, res, next) => {
         console.log('Existing product:', existingProduct);
 
         if (!existingProduct) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 message: "Product not found",
                 productId: product,
                 details: "The product ID provided does not exist in the database"

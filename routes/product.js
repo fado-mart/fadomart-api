@@ -1,13 +1,10 @@
 import { Router } from "express";
 import { hasPermission, isAuthenticated } from "../middlewares/auth.js";
-import { productsUpload } from "../middlewares/upload.js";
-import { addProduct, countProducts, deleteProducts, getProduct, getProducts, updateProduct, testDropboxConnection, syncProductInventory } from "../controllers/products.js";
+import { addProduct, countProducts, deleteProducts, getProduct, getProducts, updateProduct, syncProductInventory } from "../controllers/products.js";
 import  upload  from "../middlewares/multer.js";
 
 const productRouter = Router()
 
-// Test Dropbox connection
-productRouter.get('/test-dropbox', isAuthenticated, testDropboxConnection);
 
 productRouter.post('/products', isAuthenticated, hasPermission('add_product'), upload.single('image'), addProduct);
 

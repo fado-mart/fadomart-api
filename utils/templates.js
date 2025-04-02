@@ -96,4 +96,21 @@ export const generatePasswordResetConfirmation = (userName) => {
         <p>Your password has been successfully reset. You can now log in with your new password.</p>
         <p>If you didn't make this change, please contact our support team immediately.</p>
     `);
-}; 
+};
+
+export const orderConfirmationTemplate = (order) => `
+    <h1>Order Confirmation</h1>
+    <p>Dear User,</p>
+    <p>Your order has been placed successfully.</p>
+    <p>Order ID: ${order._id}</p>
+    <p>Total Price: GHS ${order.totalPrice}</p>
+    <p>Thank you for shopping with us!</p>
+`;
+
+export const orderStatusUpdateTemplate = (order) => `
+    <h1>Order Status Update</h1>
+    <p>Dear User,</p>
+    <p>Your order status has been updated to: ${order.status}.</p>
+    <p>Order ID: ${order._id}</p>
+    <p>Thank you for your patience!</p>
+`; 

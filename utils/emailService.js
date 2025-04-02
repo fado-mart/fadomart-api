@@ -1,19 +1,35 @@
 import nodemailer from 'nodemailer';
 import { generatePasswordResetEmail, generatePasswordResetConfirmation } from './templates.js';
 
-// Create reusable transporter
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
+class EmailService {
+    constructor() {
+        this.transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: process.env.SMTP_PORT,
+            secure: process.env.SMTP_SECURE === 'true',
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
+            }
+        });
     }
-});
+
+    async sendEmail(to, subject, html) {
+        const mailOptions = {
+            from: process.env.SMTP_FROM,
+            to,
+            subject,
+            html
+        };
+
+        return this.transporter.sendMail(mailOptions);
+    }
+}
+
+export const emailService = new EmailService();
 
 // Verify transporter configuration
-transporter.verify((error, success) => {
+emailService.transporter.verify((error, success) => {
     if (error) {
         console.error('SMTP connection error:', error);
     } else {
@@ -30,7 +46,7 @@ const sendEmail = async (to, subject, html) => {
             html
         };
 
-        const info = await transporter.sendMail(mailOptions);
+        const info = await emailService.transporter.sendMail(mailOptions);
         console.log('Email sent:', info.messageId);
         return true;
     } catch (error) {

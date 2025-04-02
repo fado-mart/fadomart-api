@@ -2,6 +2,8 @@ import { orderModel } from "../models/order.js";
 import { inventoryModel } from "../models/inventory.js";
 import { addOrderValidator, updateOrderValidator } from "../validators/order.js";
 import { productModel } from "../models/products.js";
+import { emailService } from '../utils/emailService.js';
+import { orderConfirmationTemplate, orderStatusUpdateTemplate } from '../utils/templates.js';
 
 export const addOrder = async (req, res, next) => {
     try {
@@ -50,16 +52,21 @@ export const addOrder = async (req, res, next) => {
         });
 
         // Update inventory
-        // for (const item of value.products) {
-        //     await inventoryModel.findOneAndUpdate(
-        //         { product: item.product },
-        //         { $inc: { quantity: -item.quantity } }
-        //     );
-        // }
+        for (const item of value.products) {
+            await inventoryModel.findOneAndUpdate(
+                { product: item.product },
+                { $inc: { quantity: -item.quantity } }
+            );
+        }
 
         // Populate product details
         await order.populate('products.product');
         await order.populate('user', 'userName email');
+
+        // Send order confirmation email
+        const emailSubject = `Order Confirmation - ${order._id}`;
+        const emailBody = orderConfirmationTemplate(order);
+        await emailService.sendEmail(req.auth.email, emailSubject, emailBody);
 
         res.status(201).json({
             message: 'Order created successfully',
@@ -110,7 +117,7 @@ export const updateOrderStatus = async (req, res, next) => {
             return res.status(422).json(error);
         }
 
-        const { status, trackingNumber, cancelReason } = value;
+        const { status } = value;
         const orderId = req.params.id;
 
         const order = await orderModel.findById(orderId);
@@ -118,28 +125,14 @@ export const updateOrderStatus = async (req, res, next) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        // Handle inventory updates based on status changes
-        if (status === 'Cancelled' && order.status !== 'Cancelled') {
-            // Return items to inventory if order is cancelled
-            for (const item of order.products) {
-                await inventoryModel.findOneAndUpdate(
-                    { product: item.product },
-                    { $inc: { quantity: item.quantity } }
-                );
-            }
-        }
-
-        // Update order
+        // Update order status
         order.status = status;
-        if (trackingNumber) order.trackingNumber = trackingNumber;
-        if (cancelReason) order.cancelReason = cancelReason;
         await order.save();
 
-        // Populate response data
-        await order.populate('products.product');
-        await order.populate('user', 'userName email');
-
-        
+        // Send notification email
+        const emailSubject = `Order Status Update - ${order._id}`;
+        const emailBody = orderStatusUpdateTemplate(order);
+        await emailService.sendEmail(order.user.email, emailSubject, emailBody);
 
         res.status(200).json({
             message: `Order status updated to ${status}`,

@@ -8,7 +8,8 @@ import orderRouter from "./routes/order.js";
 import checkoutRouter from "./routes/checkout.js";
 import cartRouter from "./routes/cart.js";
 import inventoryRouter from "./routes/inventory.js";
-import paymentRouter from "./routes/payment.js"
+import paymentRouter from "./routes/payment.js";
+import reportingRouter from "./routes/reporting.js"
 
 await mongoose.connect(process.env.MONGO_URI);
 
@@ -28,6 +29,7 @@ app.use(checkoutRouter);
 app.use(cartRouter);
 app.use(inventoryRouter);
 app.use(paymentRouter);
+app.use(reportingRouter);
 
 
 app.listen(port, () => {
