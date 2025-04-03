@@ -52,12 +52,12 @@ export const addOrder = async (req, res, next) => {
         });
 
         // Update inventory
-        for (const item of value.products) {
-            await inventoryModel.findOneAndUpdate(
-                { product: item.product },
-                { $inc: { quantity: -item.quantity } }
-            );
-        }
+        // for (const item of value.products) {
+        //     await inventoryModel.findOneAndUpdate(
+        //         { product: item.product },
+        //         { $inc: { quantity: -item.quantity } }
+        //     );
+        // }
 
         // Populate product details
         await order.populate('products.product');
@@ -117,7 +117,7 @@ export const updateOrderStatus = async (req, res, next) => {
             return res.status(422).json(error);
         }
 
-        const { status } = value;
+        const { status, trackingNumber, cancelReason } = value;
         const orderId = req.params.id;
 
         const order = await orderModel.findById(orderId);
@@ -125,11 +125,27 @@ export const updateOrderStatus = async (req, res, next) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        // Update order status
+        // Handle inventory updates based on status changes
+        if (status === 'Cancelled' && order.status !== 'Cancelled') {
+            // Return items to inventory if order is cancelled
+            for (const item of order.products) {
+                await inventoryModel.findOneAndUpdate(
+                    { product: item.product },
+                    { $inc: { quantity: item.quantity } }
+                );
+            }
+        }
+
+        // Update order
         order.status = status;
+        if (trackingNumber) order.trackingNumber = trackingNumber;
+        if (cancelReason) order.cancelReason = cancelReason;
         await order.save();
 
-        // Send notification email
+        // Populate response data
+        await order.populate('products.product');
+        await order.populate('user', 'userName email');
+
         const emailSubject = `Order Status Update - ${order._id}`;
         const emailBody = orderStatusUpdateTemplate(order);
         await emailService.sendEmail(order.user.email, emailSubject, emailBody);

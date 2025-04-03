@@ -16,7 +16,7 @@ class EmailService {
 
     async sendEmail(to, subject, html) {
         const mailOptions = {
-            from: process.env.SMTP_FROM,
+            from: `process.env.SMTP_FROM`,
             to,
             subject,
             html

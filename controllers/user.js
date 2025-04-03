@@ -37,7 +37,7 @@ export const registerUser = async (req, res, next) => {
         `;
 
         await mailTransporter.sendMail({
-            from: `FADOMART MALL <${process.env.MAIL_ADDRESS}>`,
+            from: `FADOMART <${process.env.MAIL_ADDRESS}>`,
             to: value.email,
             subject: "User Account Registration",
             html: generateEmailTemplate(emailContent)
