@@ -6,6 +6,7 @@ export const registerUserValidator = Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().required(),
     phone: Joi.number(),
+    address: Joi.string(),
     role: Joi.string().valid('user', 'admin', 'superadmin')
 });
 
@@ -17,5 +18,6 @@ export const loginUserValidator = Joi.object({
 export const updateUserValidator = Joi.object({
     userName: Joi.string(),
     avatar: Joi.string(),
-    phone: Joi.number()
+    phone: Joi.number(),
+    address: Joi.string()
 });
