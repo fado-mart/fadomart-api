@@ -15,12 +15,12 @@ export const addOrderValidator = Joi.object({
       paymentRef: Joi.string(),
 
       shippingAddress: Joi.object({
-        street: Joi.string().required(),
-        city: Joi.string().required(),
-        state: Joi.string().required(),
-        phone: Joi.string().required(),
-        email: Joi.string().email().required()
-    }).required()
+        street: Joi.string(),
+        city: Joi.string(),
+        state: Joi.string(),
+        phone: Joi.string(),
+        email: Joi.string().email()
+    })
 })
 
 export const updateOrderValidator = Joi.object({
