@@ -8,6 +8,6 @@ const inventoryRouter = Router();
 
 inventoryRouter.put('/update', isAuthenticated, updateStock);
 inventoryRouter.get('/inventory-status', isAuthenticated, getInventoryStatus);
-inventoryRouter.get('/history/:productId', isAuthenticated, getInventoryHistory);
+inventoryRouter.get('/inventory-history/:productId', isAuthenticated, getInventoryHistory);
 
 export default inventoryRouter; 
