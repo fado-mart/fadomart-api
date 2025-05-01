@@ -4,7 +4,8 @@ import { productModel } from '../models/products.js';
 
 export const updateStock = async (req, res, next) => {
   try {
-    const { productId, quantity, type, reason } = req.body;
+    const {productId} = req.params;
+    const { quantity, type, reason } = req.body;
 
     // First check if product exists
     const product = await productModel.findById(productId);
