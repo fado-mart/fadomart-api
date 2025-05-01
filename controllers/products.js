@@ -89,7 +89,7 @@ export const updateProduct = async (req, res, next) => {
                 errors: error.details.map(detail => detail.message)
             });
         }
-        if (!image) {
+        if (!image && !req.file) {
             return res.status(400).json({message: "Product Image is Required!"});
         }
 
