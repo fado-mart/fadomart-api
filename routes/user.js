@@ -26,6 +26,6 @@ userRouter.post('/users/logout', isAuthenticated, userLogout);
 userRouter.get('/users/me', isAuthenticated, checkBlacklist, hasPermission('get_profile'), getUserProfile);
 userRouter.get('/users', isAuthenticated, hasPermission('get_profiles'), getUserProfiles);
 userRouter.patch('/users/update', isAuthenticated, userAvatarUpload.single('images'), updateUserProfile);
-userRouter.patch('/admin/users/:userId', isAuthenticated, hasPermission('update_profiles'), userAvatarUpload.single('images'), adminUpdateUserProfile)
+userRouter.patch('/admin/users/:userId', isAuthenticated, hasPermission('update_profiles'), userAvatarUpload.single('images'), adminUpdateUserProfile);
 
 export default userRouter;
