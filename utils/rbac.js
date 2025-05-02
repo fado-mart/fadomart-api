@@ -1,6 +1,6 @@
 export const permissions = [
     {
-        role: 'user',
+        role: 'User',
         actions: [
             'get_profile',
             'update_profile',
@@ -8,7 +8,7 @@ export const permissions = [
         ]
     },
     {
-        role: 'admin',
+        role: 'Admin',
         actions: [
             'get_profile',
             'get_profiles',
