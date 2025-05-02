@@ -173,7 +173,7 @@ export const updateUserProfile = async (req, res, next) => {
     try {
         const { error, value } = updateUserValidator.validate({
             ...req.body,
-            avatar: req.file?.filename || null
+            avatar: req.file?.filename
         });
         if (error) {
             return res.status(422).json({
