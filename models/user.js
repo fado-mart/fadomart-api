@@ -33,8 +33,8 @@ const userSchema = new Schema({
     },
     role: {
         type: String,
-        enum: ['user', 'admin', 'superadmin'],
-        default: 'user'
+        enum: ['User', 'Admin'],
+        default: 'User'
     },
     passwordResetToken: String,
     passwordResetExpires: Date
