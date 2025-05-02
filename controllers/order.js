@@ -110,6 +110,40 @@ export const getUserOrders = async (req, res, next) => {
     }
 };
 
+export const getAllOrders = async (req, res, next) => {
+    try {
+        const { status, page = 1, limit = 10 } = req.query;
+        const query = {};
+
+        // Apply status filter if provided
+        if (status) {
+            query.status = status;
+        }
+
+        const orders = await orderModel
+            .find(query)
+            .populate('products.product')
+            .populate('user', 'userName email')
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        const total = await orderModel.countDocuments(query);
+
+        res.status(200).json({
+            orders,
+            pagination: {
+                total,
+                pages: Math.ceil(total / limit),
+                currentPage: page,
+                perPage: limit
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const updateOrderStatus = async (req, res, next) => {
     try {
         const { error, value } = updateOrderValidator.validate(req.body);
