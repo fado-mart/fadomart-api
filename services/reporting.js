@@ -34,7 +34,8 @@ export class ReportingService {
 
         const inventoryData = await inventoryModel.find().populate('product');
         return inventoryData.map(item => ({
-            product: item.product?.productName || 'Unknown Product',
+            productId: item.product?._id || 'Unknown',
+            productName: item.product?.productName || 'Unknown Product',
             quantity: item.quantity,
             lowStockThreshold: item.lowStockThreshold,
             location: item.location
