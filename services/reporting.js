@@ -24,9 +24,17 @@ export class ReportingService {
     }
 
     async getInventoryReport() {
+        // const inventoryData = await inventoryModel.find().populate('product');
+        // return inventoryData.map(item => ({
+        //     product: item.product.productName,
+        //     quantity: item.quantity,
+        //     lowStockThreshold: item.lowStockThreshold,
+        //     location: item.location
+        // }));
+
         const inventoryData = await inventoryModel.find().populate('product');
         return inventoryData.map(item => ({
-            product: item.product.productName,
+            product: item.product?.productName || 'Unknown Product',
             quantity: item.quantity,
             lowStockThreshold: item.lowStockThreshold,
             location: item.location
@@ -115,15 +123,28 @@ export class ReportingService {
     }
 
     async getLowStockReport() {
+        // const lowStockData = await inventoryModel.find({
+        //     $expr: {
+        //         $lt: ['$quantity', '$lowStockThreshold']
+        //     }
+        // }).populate('product');
+
+        // return lowStockData.map(item => ({
+        //     productId: item.product._id,
+        //     productName: item.product.productName,
+        //     quantity: item.quantity,
+        //     lowStockThreshold: item.lowStockThreshold
+        // }));
+
         const lowStockData = await inventoryModel.find({
             $expr: {
                 $lt: ['$quantity', '$lowStockThreshold']
             }
         }).populate('product');
-
+    
         return lowStockData.map(item => ({
-            productId: item.product._id,
-            productName: item.product.productName,
+            productId: item.product?._id || 'Unknown',
+            productName: item.product?.productName || 'Unknown Product',
             quantity: item.quantity,
             lowStockThreshold: item.lowStockThreshold
         }));
