@@ -173,17 +173,27 @@ export const updateUserProfile = async (req, res, next) => {
     try {
         const { error, value } = updateUserValidator.validate({
             ...req.body,
-            avatar: req.file?.filename
+            avatar: req.file?.filename || null
         });
         if (error) {
-            return res.status(422).json(error);
+            return res.status(422).json({
+                message: "Validation error",
+                details: error.details
+            });
         }
 
-        const updateUser = await UserModel.findByIdAndUpdate(req.auth.id, value);
+        const updatedUser = await UserModel.findByIdAndUpdate(req.auth.id, value);
 
-        res.json('User profile updated successfully',
-            updateUser
-        )
+        if (!updatedUser) {
+            return res.status(404).json({
+                message: 'User not found'
+            });
+        }
+
+        return res.status(200).json({
+            message: 'User profile updated successfully',
+            user: updatedUser
+        });
 
     } catch (error) {
         next(error);
