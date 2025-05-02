@@ -13,6 +13,7 @@ export const permissions = [
             'get_profile',
             'get_profiles',
             'update_profile',
+            'update_profiles',
             'delete_profile',
             'add_product',
             'update_product',

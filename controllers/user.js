@@ -200,6 +200,44 @@ export const updateUserProfile = async (req, res, next) => {
     }
 }
 
+export const adminUpdateUserProfile = async (req, res, next) => {
+    try {
+        // Extract user ID from the request parameters and validate input
+        const { userId } = req.params;
+        const { error, value } = updateUserValidator.validate({
+            ...req.body,
+            avatar: req.file?.filename
+        });
+
+        // Handle validation errors
+        if (error) {
+            return res.status(422).json({
+                message: "Validation error",
+                details: error.details
+            });
+        }
+
+        // Update the user profile by ID
+        const updatedUser = await UserModel.findByIdAndUpdate(userId, value, { new: true });
+
+        // Check if the user was found and updated
+        if (!updatedUser) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        // Respond with the updated user data
+        return res.status(200).json({
+            message: "User profile updated successfully",
+            user: updatedUser
+        });
+
+    } catch (error) {
+        next(error); // Pass any unexpected errors to the error handler
+    }
+};
+
 // Logout Users
 export const userLogout = async(req, res, next) => {
     try {
