@@ -179,9 +179,11 @@ export const updateUserProfile = async (req, res, next) => {
             return res.status(422).json(error);
         }
 
-        await UserModel.findByIdAndUpdate(req.auth.id, value);
+        const updateUser = await UserModel.findByIdAndUpdate(req.auth.id, value);
 
-        res.json('User profile updated successfully')
+        res.json('User profile updated successfully',
+            updateUser
+        )
 
     } catch (error) {
         next(error);
