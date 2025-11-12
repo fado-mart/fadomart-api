@@ -1,16 +1,16 @@
 {
   "name": "fadomart-api",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Backend API for FadoMart e-commerce platform using Node.js, Express, and MongoDB.",
+  "main": "api/index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --env-file=.env .",
-    "start": "node ."
+    "dev": "nodemon --env-file=.env server-local.js",
+    "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["e-commerce", "api", "nodejs", "express", "mongodb", "fadomart", "vercel"],
+  "author": "Frederick",
   "license": "ISC",
   "dependencies": {
     "@reis/mongoose-to-json": "^3.0.0",
